@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>퇴근 스탑워치</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Righteous&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #3b2a7a;
+    --pink: #ff7ac8;
+    --lav: #b69cff;
+    --sky: #7cd3ff;
+    --best: #12a85a;
+    --worst: #e8336d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: linear-gradient(180deg, #c9b8ff 0%, #ffc4e8 48%, #ffe0f1 70%, #e7dcff 100%);
+    color: var(--ink);
+    font-family: "Jua", -apple-system, "Apple SD Gothic Neo", sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ---------- background scene ---------- */
+  .bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+  .floor {
+    position: fixed; left: -50%; right: -50%; bottom: 0; height: 42vh; z-index: 0;
+    background:
+      linear-gradient(#ff9ad5 2px, transparent 2px) 0 0 / 64px 64px,
+      linear-gradient(90deg, #ff9ad5 2px, transparent 2px) 0 0 / 64px 64px,
+      linear-gradient(180deg, rgba(244,214,255,.2), #d9c6ff);
+    transform: perspective(420px) rotateX(58deg);
+    transform-origin: bottom;
+    opacity: .75;
+    animation: grid 2.4s linear infinite;
+  }
+  @keyframes grid { to { background-position: 0 64px, 0 64px, 0 0; } }
+  main {
+    position: relative; z-index: 2;
+    height: 100vh; min-height: 560px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px 44px;
+  }
+  .scene { flex: 1 1 0; min-height: 180px; width: 100%; max-width: 720px; overflow: visible; }
+  .app { flex: none; }
+  @media (min-width: 700px) and (min-aspect-ratio: 11/10) {
+    main { flex-direction: row; justify-content: center; gap: 3vw; }
+    .scene { height: 100%; max-width: 640px; }
+    .app { margin: 0 !important; }
+  }
+  .twinkle { animation: twinkle 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .twinkle:nth-of-type(2n) { animation-delay: .5s; }
+  .twinkle:nth-of-type(3n) { animation-delay: 1s; }
+  @keyframes twinkle { 0%,100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+  .float { animation: float 4s ease-in-out infinite; }
+  .float.b { animation-delay: -2s; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+  .paw { animation: paw 3s cubic-bezier(.5,0,.3,1) infinite; }
+  @keyframes paw {
+    0%   { transform: translate(340px, 220px) rotate(8deg); }
+    24%  { transform: translate(0, 0) rotate(0); }
+    30%  { transform: translate(-8px, 5px) rotate(-2deg); }
+    38%  { transform: translate(0, 0) rotate(0); }
+    54%  { transform: translate(0, 0) rotate(0); }
+    80%, 100% { transform: translate(340px, 220px) rotate(8deg); }
+  }
+  .flap { transform-box: fill-box; animation: flap 3s ease-in-out infinite; }
+  .flap.l { transform-origin: left center; }
+  .flap.r { transform-origin: right center; }
+  @keyframes flap { 0%,30% { transform: scaleX(1); } 38%,66% { transform: scaleX(.08); } 76%,100% { transform: scaleX(1); } }
+  .led { animation: led 3s steps(1) infinite; }
+  @keyframes led { 0% { fill: #ff4f8b; } 29% { fill: #3dff9a; } 64% { fill: #ff4f8b; } }
+  .scr-idle { animation: idle 3s steps(1) infinite; }
+  .scr-ok { animation: ok 3s steps(1) infinite; }
+  @keyframes idle { 0% { opacity: 1; } 29% { opacity: 0; } 64% { opacity: 1; } }
+  @keyframes ok { 0% { opacity: 0; } 29% { opacity: 1; } 64% { opacity: 0; } }
+  .pop { transform-box: fill-box; transform-origin: center; animation: pop 3s ease-out infinite; }
+  @keyframes pop {
+    0%, 27% { opacity: 0; transform: scale(.3); }
+    33% { opacity: 1; transform: scale(1.15); }
+    38%, 58% { opacity: 1; transform: scale(1); }
+    66%, 100% { opacity: 0; transform: scale(1); }
+  }
+  .burst { transform-box: fill-box; transform-origin: center; animation: burst 3s ease-out infinite; }
+  @keyframes burst {
+    0%, 28% { opacity: 0; transform: scale(.4); }
+    32% { opacity: 1; }
+    52%, 100% { opacity: 0; transform: scale(1.4); }
+  }
+  .sign { animation: sign 1.2s steps(1) infinite; }
+  @keyframes sign { 0% { opacity: 1; } 85% { opacity: .55; } }
+  .hearts use { transform-box: fill-box; transform-origin: center; animation: heartUp 3s ease-out infinite; opacity: 0; }
+  .hearts use:nth-child(2) { animation-delay: .08s; }
+  .hearts use:nth-child(3) { animation-delay: .16s; }
+  .hearts use:nth-child(4) { animation-delay: .04s; }
+  @keyframes heartUp {
+    0%, 30% { opacity: 0; transform: translateY(20px) scale(.4); }
+    36% { opacity: 1; transform: translateY(0) scale(1.1); }
+    62%, 100% { opacity: 0; transform: translateY(-50px) scale(.9) rotate(15deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scene *, .bg *, .floor { animation: none !important; }
+  }
+
+  .ticker {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
+    background: linear-gradient(90deg, var(--pink), var(--lav), var(--sky));
+    color: #fff; font-size: 15px; letter-spacing: 1px;
+    white-space: nowrap; overflow: hidden; padding: 7px 0;
+    border-top: 2px solid #fff;
+    text-shadow: 0 1px 0 rgba(59,42,122,.35);
+  }
+  .ticker span { display: inline-block; padding-left: 100%; animation: tick 18s linear infinite; }
+  @keyframes tick { to { transform: translateX(-100%); } }
+
+  /* ---------- stopwatch window ---------- */
+  .app {
+    position: relative; z-index: 2;
+    width: calc(100% - 32px); max-width: 400px;
+    margin: 0 auto 20px;
+    background: rgba(255,255,255,.58);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 2px solid #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(120,80,200,.25), inset 0 0 0 1px rgba(182,156,255,.5);
+  }
+  .app::before, .app::after {
+    content: ""; position: absolute; z-index: -1; top: -22px;
+    width: 38px; height: 34px;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    border-radius: 6px;
+  }
+  .app::before { left: 22px; background: linear-gradient(160deg, #ffc2e6, var(--pink)); transform: rotate(-12deg); }
+  .app::after { right: 22px; background: linear-gradient(200deg, #c9ecff, var(--sky)); transform: rotate(12deg); }
+  .titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, var(--pink), var(--lav), var(--sky));
+    color: #fff; font-size: 15px;
+    text-shadow: 0 1px 0 rgba(59,42,122,.35);
+  }
+  .dots { display: flex; gap: 6px; }
+  .dots i {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0 25%, #ffd1ec 40%, #ff8fcf 100%);
+    border: 1px solid rgba(255,255,255,.9);
+  }
+  .body { padding: 18px 20px 20px; }
+  .display {
+    font-family: "Righteous", sans-serif;
+    font-size: clamp(44px, 14vw, 64px);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #7b5cff 0%, #3b2a7a 48%, #ff4fb3 52%, #ff9ad5 100%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 2px 0 #fff);
+    margin: 4px 0 18px;
+  }
+  .display .ms { font-size: .55em; }
+  .controls { display: flex; gap: 14px; justify-content: center; margin-bottom: 16px; }
+  button {
+    position: relative;
+    flex: 1; max-width: 150px; height: 52px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    font-family: inherit; font-size: 20px; color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.2);
+    cursor: pointer; overflow: hidden;
+    box-shadow: 0 4px 10px rgba(120,80,200,.25);
+    transition: transform .1s, opacity .2s;
+  }
+  button::before {
+    content: ""; position: absolute; left: 10%; right: 10%; top: 3px; height: 45%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,0));
+    pointer-events: none;
+  }
+  button:active { transform: scale(.95); }
+  button:disabled { opacity: .45; cursor: default; }
+  #lapReset { background: linear-gradient(180deg, #d9ccff, #9a86e8); }
+  #startStop { background: linear-gradient(180deg, #9dffc8, #26c46e); }
+  #startStop.running { background: linear-gradient(180deg, #ffa8cf, #ff3f8e); }
+  ul {
+    list-style: none; max-height: 170px; overflow-y: auto;
+    border-top: 2px dotted rgba(182,156,255,.8);
+  }
+  li {
+    display: flex; justify-content: space-between;
+    padding: 9px 4px;
+    border-bottom: 2px dotted rgba(182,156,255,.5);
+    font-size: 16px;
+  }
+  li span:last-child { font-family: "Righteous", sans-serif; font-variant-numeric: tabular-nums; }
+  li.best { color: var(--best); }
+  li.worst { color: var(--worst); }
+  .hint { text-align: center; font-size: 13px; opacity: .7; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="floor"></div>
+<svg class="bg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".35" stop-color="#d8dcff"/>
+      <stop offset=".5" stop-color="#8c94cf"/>
+      <stop offset=".55" stop-color="#eef0ff"/>
+      <stop offset="1" stop-color="#b3b9ea"/>
+    </linearGradient>
+    <linearGradient id="chromeH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9aa2dc"/>
+      <stop offset=".3" stop-color="#ffffff"/>
+      <stop offset=".6" stop-color="#c3c8f2"/>
+      <stop offset="1" stop-color="#7f87c4"/>
+    </linearGradient>
+    <linearGradient id="holo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffc2ea"/>
+      <stop offset=".33" stop-color="#c9f0ff"/>
+      <stop offset=".66" stop-color="#e2ccff"/>
+      <stop offset="1" stop-color="#c7ffe6"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" values="0 .5 .5;360 .5 .5" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd6f0" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ff8fcf" stop-opacity=".55"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4d6ff"/>
+      <stop offset="1" stop-color="#d6c4ff"/>
+    </linearGradient>
+    <symbol id="spark" viewBox="-10 -10 20 20">
+      <path d="M0-10 C1-2 2-1 10 0 C2 1 1 2 0 10 C-1 2 -2 1 -10 0 C-2-1 -1-2 0-10Z" fill="#fff"/>
+    </symbol>
+    <symbol id="heart" viewBox="-12 -11 24 22">
+      <path d="M0 9 C-14 0 -10 -12 0 -5 C10 -12 14 0 0 9Z" fill="url(#chrome)" stroke="#fff" stroke-width="1.5"/>
+    </symbol>
+    <symbol id="heartP" viewBox="-12 -11 24 22">
+      <path d="M0 9 C-14 0 -10 -12 0 -5 C10 -12 14 0 0 9Z" fill="#ff6fb5" stroke="#fff" stroke-width="2"/>
+      <ellipse cx="-4.5" cy="-3" rx="2.2" ry="1.4" fill="#fff" opacity=".8"/>
+    </symbol>
+  </defs>
+
+  <!-- sparkles & floating hearts -->
+  <use href="#spark" class="twinkle" x="60" y="300" width="22" height="22"/>
+  <use href="#spark" class="twinkle" x="700" y="260" width="28" height="28"/>
+  <use href="#spark" class="twinkle" x="140" y="380" width="16" height="16"/>
+  <use href="#spark" class="twinkle" x="660" y="390" width="14" height="14"/>
+  <use href="#spark" class="twinkle" x="30" y="180" width="18" height="18"/>
+  <use href="#spark" class="twinkle" x="750" y="140" width="20" height="20"/>
+  <g class="float"><use href="#heart" x="90" y="220" width="40" height="36"/></g>
+  <g class="float b"><use href="#heart" x="690" y="320" width="30" height="27"/></g>
+</svg>
+
+<div class="ticker"><span>★ 오늘도 수고했냥 ★ 칼퇴는 국룰 ★ 내일의 나에게 맡기자 ★ 퇴근 게이트 OPEN ★ 오늘도 수고했냥 ★</span></div>
+
+<main>
+<div class="app">
+  <div class="titlebar"><span>♡ stopwatch.exe</span><div class="dots"><i></i><i></i><i></i></div></div>
+  <div class="body">
+    <div class="display" id="display">00:00<span class="ms">.00</span></div>
+    <div class="controls">
+      <button id="lapReset" disabled>랩</button>
+      <button id="startStop">시작</button>
+    </div>
+    <ul id="laps"></ul>
+    <p class="hint">Space 시작/정지 · L 랩 · R 초기화</p>
+  </div>
+</div>
+
+<svg class="scene" viewBox="200 70 520 420" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <!-- hanging EXIT sign -->
+  <g class="float">
+    <path d="M330 70 V104 M470 70 V104" stroke="#b3b9ea" stroke-width="3"/>
+    <rect x="300" y="100" width="200" height="56" rx="16" fill="url(#chrome)" stroke="#fff" stroke-width="3"/>
+    <rect x="310" y="109" width="180" height="38" rx="10" fill="#2b1f5c"/>
+    <text class="sign" x="400" y="136" text-anchor="middle" font-family="Righteous, sans-serif" font-size="22" letter-spacing="2" fill="#3dff9a">EXIT ♥ 퇴근</text>
+  </g>
+
+  <!-- gate -->
+  <ellipse cx="400" cy="472" rx="190" ry="14" fill="#9a7fe0" opacity=".25"/>
+  <rect class="flap l" x="296" y="368" width="104" height="46" rx="10" fill="url(#glass)" stroke="#fff" stroke-width="2"/>
+  <rect class="flap r" x="400" y="368" width="104" height="46" rx="10" fill="url(#glass)" stroke="#fff" stroke-width="2"/>
+  <rect x="246" y="300" width="56" height="172" rx="22" fill="url(#chromeH)" stroke="#fff" stroke-width="2"/>
+  <rect x="498" y="300" width="56" height="172" rx="22" fill="url(#chromeH)" stroke="#fff" stroke-width="2"/>
+  <rect x="256" y="340" width="8" height="100" rx="4" fill="#fff" opacity=".7"/>
+  <rect x="508" y="340" width="8" height="100" rx="4" fill="#fff" opacity=".7"/>
+  <rect class="led" x="256" y="318" width="36" height="10" rx="5" fill="#ff4f8b" stroke="#fff" stroke-width="1.5"/>
+  <rect class="led" x="508" y="318" width="36" height="10" rx="5" fill="#ff4f8b" stroke="#fff" stroke-width="1.5"/>
+  <!-- reader glow -->
+  <circle class="burst" cx="526" cy="281" r="52" fill="#3dff9a" opacity=".5"/>
+
+  <!-- card reader -->
+  <rect x="486" y="250" width="80" height="62" rx="14" fill="url(#chrome)" stroke="#fff" stroke-width="2"/>
+  <rect x="496" y="260" width="60" height="28" rx="7" fill="#2b1f5c"/>
+  <text class="scr-idle" x="526" y="279" text-anchor="middle" font-family="Righteous, sans-serif" font-size="11" fill="#7cd3ff">TAG ▸</text>
+  <text class="scr-ok" x="526" y="279" text-anchor="middle" font-family="Righteous, sans-serif" font-size="11" fill="#3dff9a">BYE ♥</text>
+  <circle class="led" cx="526" cy="300" r="5" fill="#ff4f8b" stroke="#fff" stroke-width="1.5"/>
+
+  <!-- tap burst -->
+  <g class="burst" stroke="#fff" stroke-width="4" stroke-linecap="round">
+    <line x1="526" y1="226" x2="526" y2="210"/>
+    <line x1="470" y1="250" x2="456" y2="240"/>
+    <line x1="582" y1="250" x2="596" y2="240"/>
+    <line x1="462" y1="282" x2="446" y2="282"/>
+  </g>
+
+  <!-- heart confetti -->
+  <g class="hearts">
+    <use href="#heartP" x="466" y="222" width="30" height="27"/>
+    <use href="#heartP" x="566" y="196" width="24" height="22"/>
+    <use href="#heartP" x="424" y="262" width="20" height="18"/>
+    <use href="#heartP" x="610" y="238" width="26" height="24"/>
+  </g>
+
+  <!-- 삑! bubble -->
+  <g class="pop">
+    <path d="M360 196 h96 a18 18 0 0 1 18 18 v22 a18 18 0 0 1 -18 18 h-40 l18 20 -36 -20 h-38 a18 18 0 0 1 -18 -18 v-22 a18 18 0 0 1 18 -18z" fill="#fff" stroke="#ff7ac8" stroke-width="3"/>
+    <text x="408" y="234" text-anchor="middle" font-family="Jua, sans-serif" font-size="26" fill="#ff3f8e">삑! 퇴근♥</text>
+  </g>
+
+  <!-- cat paw holding badge -->
+  <g class="paw">
+    <!-- sleeve -->
+    <line x1="668" y1="388" x2="880" y2="628" stroke="#9fd8ff" stroke-width="74" stroke-linecap="butt"/>
+    <line x1="690" y1="424" x2="860" y2="616" stroke="#7cc3f0" stroke-width="8" stroke-linecap="round" opacity=".6"/>
+    <!-- badge -->
+    <g transform="rotate(-6 540 280)">
+      <rect x="504" y="230" width="74" height="100" rx="9" fill="url(#holo)" stroke="#fff" stroke-width="3"/>
+      <rect x="530" y="236" width="22" height="5" rx="2.5" fill="#fff"/>
+      <rect x="533" y="223" width="16" height="13" rx="4" fill="url(#chrome)" stroke="#fff" stroke-width="1.5"/>
+      <path d="M537 223 C 532 205, 550 205, 545 223" fill="none" stroke="#ff7ac8" stroke-width="4" stroke-linecap="round"/>
+      <rect x="514" y="248" width="30" height="34" rx="5" fill="#fff"/>
+      <!-- mini cat photo -->
+      <path d="M519 262 l3 -9 l5 6 h4 l5 -6 l3 9 a10 10 0 0 1 -20 0z" fill="#ffd29a"/>
+      <circle cx="525" cy="264" r="1.6" fill="#3b2a7a"/>
+      <circle cx="533" cy="264" r="1.6" fill="#3b2a7a"/>
+      <path d="M527 268 q2 2 4 0" stroke="#3b2a7a" stroke-width="1.2" fill="none"/>
+      <text x="549" y="262" font-family="Righteous, sans-serif" font-size="7" fill="#3b2a7a">STAFF</text>
+      <text x="549" y="274" font-family="Jua, sans-serif" font-size="9" fill="#ff3f8e">냥대리</text>
+      <rect x="514" y="292" width="54" height="5" rx="2.5" fill="#fff" opacity=".8"/>
+      <rect x="514" y="302" width="38" height="5" rx="2.5" fill="#fff" opacity=".8"/>
+      <text x="541" y="322" text-anchor="middle" font-family="Righteous, sans-serif" font-size="7" fill="#3b2a7a">OUT 18:00</text>
+    </g>
+    <!-- arm + paw (palm side): one outline layer, then one fill layer, so the wrist has no seam -->
+    <g fill="#f0a96a">
+      <line x1="582" y1="310" x2="668" y2="388" stroke="#f0a96a" stroke-width="58" stroke-linecap="butt"/>
+      <ellipse cx="582" cy="310" rx="31.5" ry="25.5"/>
+      <circle cx="558" cy="294" r="13.5"/>
+      <circle cx="572" cy="279" r="13.5"/>
+      <circle cx="591" cy="279" r="13.5"/>
+      <circle cx="605" cy="294" r="13.5"/>
+    </g>
+    <g fill="#ffe0b5">
+      <line x1="582" y1="310" x2="668" y2="388" stroke="#ffe0b5" stroke-width="53" stroke-linecap="butt"/>
+      <ellipse cx="582" cy="310" rx="29" ry="23"/>
+      <circle cx="558" cy="294" r="11"/>
+      <circle cx="572" cy="279" r="11"/>
+      <circle cx="591" cy="279" r="11"/>
+      <circle cx="605" cy="294" r="11"/>
+    </g>
+    <!-- toe gaps -->
+    <g stroke="#f0a96a" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <path d="M562 282 Q565 287 567 290"/>
+      <path d="M581.5 270 V279"/>
+      <path d="M601 282 Q598 287 596 290"/>
+    </g>
+    <!-- tabby stripes on the arm -->
+    <path d="M605 357 Q617 341 635 331 M625 375 Q637 359 655 349" fill="none" stroke="#f5b47a" stroke-width="7" stroke-linecap="round"/>
+    <!-- beans -->
+    <path d="M582 324 c-14 0 -18 -6 -16 -12 c2 -6 8 -6 10 -10 c3 -5 9 -5 12 0 c2 4 8 4 10 10 c2 6 -2 12 -16 12z" fill="#ff9ec4"/>
+    <ellipse cx="558" cy="293" rx="5.5" ry="6.5" fill="#ff9ec4"/>
+    <ellipse cx="572" cy="278" rx="5.5" ry="6.5" fill="#ff9ec4"/>
+    <ellipse cx="591" cy="278" rx="5.5" ry="6.5" fill="#ff9ec4"/>
+    <ellipse cx="605" cy="293" rx="5.5" ry="6.5" fill="#ff9ec4"/>
+    <ellipse cx="575" cy="306" rx="4" ry="2.5" fill="#fff" opacity=".7"/>
+    <!-- shirt cuff over the wrist -->
+    <g transform="translate(668 388) rotate(48.7)">
+      <rect x="-10" y="-40" width="20" height="80" rx="9" fill="#fff" stroke="#b9e0fb" stroke-width="2.5"/>
+      <circle cx="0" cy="24" r="3.5" fill="#ffc2e6" stroke="#ff9ad5" stroke-width="1.2"/>
+    </g>
+  </g>
+</svg>
+</main>
+
+<script>
+  const display = document.getElementById('display');
+  const startStopBtn = document.getElementById('startStop');
+  const lapResetBtn = document.getElementById('lapReset');
+  const lapsEl = document.getElementById('laps');
+
+  let running = false;
+  let startTime = 0;   // performance.now() at last start
+  let elapsed = 0;     // accumulated ms before last start
+  let lapStart = 0;    // total elapsed at start of current lap
+  let laps = [];       // lap durations in ms
+  let rafId = null;
+
+  const now = () => elapsed + (running ? performance.now() - startTime : 0);
+
+  function format(ms) {
+    const cs = Math.floor(ms / 10) % 100;
+    const s = Math.floor(ms / 1000) % 60;
+    const m = Math.floor(ms / 60000) % 60;
+    const h = Math.floor(ms / 3600000);
+    const pad = n => String(n).padStart(2, '0');
+    const main = (h ? h + ':' : '') + pad(m) + ':' + pad(s);
+    return { main, cs: '.' + pad(cs) };
+  }
+
+  function render() {
+    const t = format(now());
+    display.innerHTML = `${t.main}<span class="ms">${t.cs}</span>`;
+    const current = lapsEl.querySelector('li.current span:last-child');
+    if (current) {
+      const lt = format(now() - lapStart);
+      current.textContent = lt.main + lt.cs;
+    }
+    if (running) rafId = requestAnimationFrame(render);
+  }
+
+  function renderLaps() {
+    lapsEl.innerHTML = '';
+    if (running || elapsed > 0) {
+      const lt = format(now() - lapStart);
+      lapsEl.insertAdjacentHTML('beforeend',
+        `<li class="current"><span>랩 ${laps.length + 1}</span><span>${lt.main + lt.cs}</span></li>`);
+    }
+    const min = Math.min(...laps), max = Math.max(...laps);
+    for (let i = laps.length - 1; i >= 0; i--) {
+      let cls = '';
+      if (laps.length >= 2) {
+        if (laps[i] === min) cls = 'best';
+        else if (laps[i] === max) cls = 'worst';
+      }
+      const t = format(laps[i]);
+      lapsEl.insertAdjacentHTML('beforeend',
+        `<li class="${cls}"><span>랩 ${i + 1}</span><span>${t.main + t.cs}</span></li>`);
+    }
+  }
+
+  function updateButtons() {
+    startStopBtn.textContent = running ? '정지' : '시작';
+    startStopBtn.classList.toggle('running', running);
+    lapResetBtn.textContent = running || elapsed === 0 ? '랩' : '재설정';
+    lapResetBtn.disabled = !running && elapsed === 0;
+  }
+
+  function toggle() {
+    if (running) {
+      elapsed = now();
+      running = false;
+      cancelAnimationFrame(rafId);
+    } else {
+      startTime = performance.now();
+      running = true;
+      rafId = requestAnimationFrame(render);
+    }
+    updateButtons();
+    renderLaps();
+    render();
+  }
+
+  function lap() {
+    if (!running) return;
+    const t = now();
+    laps.push(t - lapStart);
+    lapStart = t;
+    renderLaps();
+  }
+
+  function reset() {
+    if (running) return;
+    elapsed = 0; lapStart = 0; laps = [];
+    updateButtons();
+    renderLaps();
+    render();
+  }
+
+  startStopBtn.addEventListener('click', toggle);
+  lapResetBtn.addEventListener('click', () => running ? lap() : reset());
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.key === 'l' || e.key === 'L') lap();
+    else if (e.key === 'r' || e.key === 'R') reset();
+  });
+</script>
+</body>
+</html>
